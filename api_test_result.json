@@ -1,0 +1,157 @@
+{
+  "saleId": 53635,
+  "partnerCode": "WEV_KO",
+  "sectionType": "NORMAL",
+  "thumbnailImageUrls": [
+    "https://cdn-contents.weverseshop.io/public/shop/183d0390a89d93140649e394bb5defbf.png"
+  ],
+  "status": "SOLD_OUT",
+  "statusCode": "sale.status.out.of.stock",
+  "labelArtistInfo": {
+    "labelArtistId": 7,
+    "name": "SEVENTEEN",
+    "shortName": "SEVENTEEN",
+    "logoImageUrl": "https://cdn-contents.weverseshop.io/public/shop/473056f5b32e53b2ab5b2d9cba5529db.jpg"
+  },
+  "name": "도겸X승관 1st Mini Album '소야곡' [LP]",
+  "price": {
+    "originalPrice": 49000.0,
+    "salePrice": 49000.0,
+    "supplyPrice": 44545.0,
+    "supplySalePrice": 44545.0,
+    "discountPercent": 0,
+    "isDiscountDisplay": false,
+    "earnedCash": 450.0,
+    "isTaxIncluded": false,
+    "includeJapanTaxInPrice": false,
+    "includeKoreaTaxInPrice": false,
+    "isTaxDeductible": false
+  },
+  "icons": [],
+  "emblems": [],
+  "eventGuides": [],
+  "shipping": {
+    "shippingGroupId": 31
+  },
+  "orderLimitInfo": {
+    "descriptions": [
+      "Weverse Global handles this product.\t\t\t\t\t"
+    ]
+  },
+  "detailImages": [
+    {
+      "imageUrl": "https://cdn-contents.weverseshop.io/public/shop/a4c5cc6a82e7f60a65b2f8ccc7b9acb4.png",
+      "width": 720,
+      "height": 1409
+    },
+    {
+      "imageUrl": "https://cdn-contents.weverseshop.io/public/shop/2dc2ad3946be4621169ddf457c76d982.jpg",
+      "width": 720,
+      "height": 3086
+    }
+  ],
+  "isShareEnable": true,
+  "isDigitalLive": false,
+  "isMembershipBenefit": false,
+  "isCartUsable": true,
+  "isCartButtonDisplay": true,
+  "isShippingAddressRequired": true,
+  "isOrderLimitedPerUser": false,
+  "isSeoReport": true,
+  "albumChartTargets": [
+    "HANTEO_CIRCLE"
+  ],
+  "option": {
+    "optionSelectionType": "MULTIPLE",
+    "options": [
+      {
+        "saleStockId": 103770,
+        "saleStockIds": [
+          103770
+        ],
+        "saleOptionName": "LP",
+        "isSoldOut": false,
+        "variantOptionLocation": [],
+        "optionAddPrice": 0.0,
+        "optionSalePrice": 49000.0,
+        "supplyOptionSalePrice": 44545.0
+      }
+    ],
+    "hasOptionAddPrice": false,
+    "variants": []
+  },
+  "goodsOrderLimit": {
+    "orderLimitType": "GOODS",
+    "maxOrderQuantity": 5,
+    "availableQuantity": 5
+  },
+  "cautionInfos": [
+    "The random items in this album are included with equal probability.",
+    "The outbox is used to protect the actual product. Please note that we do not offer exchange or refund due to damages that may occur during the delivery.",
+    "Product size may differ by 10 to 30mm due to different measurements.",
+    "Please note the color tone of the product image may be different from that of the actual product."
+  ],
+  "descriptionInfos": [
+    {
+      "descriptions": [
+        "100% of the album sales on Weverse Shop will count for Hanteo Chart and Circle Chart.\t\t\t\t\t\t\t"
+      ]
+    }
+  ],
+  "notificationInfos": [
+    {
+      "title": "Product Name",
+      "description": "도겸X승관 1st Mini Album '소야곡' [LP]"
+    },
+    {
+      "title": "Label",
+      "description": "PLEDIS ENTERTAINMENT"
+    },
+    {
+      "title": "Release date",
+      "description": "26.03.16"
+    },
+    {
+      "title": "Title ",
+      "description": "Blue"
+    },
+    {
+      "title": "Contents",
+      "description": "-아웃박스: 1종 / W315 X H315 X T5 (mm)\n-이너 슬리브: 1종 / W305 X H305 (mm)\n-씨블루 디스크 (A/B Side): 1종 / W300 X H300 (mm) \n-스티커: 1종 / W100 X H150 (mm)\n-북클릿: 1종 / W300 X H300 (mm) / 16p\n-포토카드: 4종 / W55 X H85 (mm)\n-가사지/포스터: 1종 / W390 X H290 (mm)"
+    },
+    {
+      "title": "Track list",
+      "description": "1. Rockstar (DK Solo)\n2. Blue\n3. Guilty Pleasure\n4. Slience\n5. Dream Serenade (SEUNGKWAN Solo)\n6. Prelude of love"
+    },
+    {
+      "title": "Manufacturer",
+      "description": "YG PLUS"
+    },
+    {
+      "title": "Country of manufacture",
+      "description": "KOREA"
+    },
+    {
+      "title": "Period of use",
+      "description": "Not Applicable"
+    },
+    {
+      "title": "How to Offer Your Goods",
+      "description": "LP"
+    },
+    {
+      "title": "Minimum System Specifications",
+      "description": "Not Applicable"
+    },
+    {
+      "title": "Quality assurance standards",
+      "description": "In accordance with relevant laws and the criteria for the settlement of consumer disputes"
+    },
+    {
+      "title": "Customer service",
+      "description": "Weverse Shop Customer Center : 1544-0790"
+    }
+  ],
+  "returnInfosId": 1,
+  "metaTag": {}
+}

@@ -1,0 +1,162 @@
+{
+  "capture_time": "2026-03-18T11:52:30Z",
+  "url": "https://shop.weverse.io/zh-tw/shop/KRW/artists/7/sales/53635",
+  "api_request": {
+    "method": "GET",
+    "url": "https://shop.weverse.io/api/wvs/product/api/v1/sales/53635?displayPlatform=WEB",
+    "headers": {
+      "accept": "*/*",
+      "accept-language": "zh-tw",
+      "x-benx-artistid": "7",
+      "x-benx-currency": "KRW",
+      "x-benx-language": "zh-tw",
+      "x-benx-os": "web",
+      "x-user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+      "x-weverse-usercountry": "HK",
+      "referer": "https://shop.weverse.io/zh-tw/shop/KRW/artists/7/sales/53635"
+    },
+    "cookies": {
+      "wes_display_user_country": "HK",
+      "wes_artistId": "7",
+      "NEXT_LOCALE": "zh-tw",
+      "wes_currency": "KRW",
+      "wes_order_user_country": "UNSET"
+    },
+    "query_params": {
+      "displayPlatform": "WEB"
+    }
+  },
+  "api_response": {
+    "status": 200,
+    "statusText": "",
+    "headers": {
+      "content-type": "application/json",
+      "date": "Wed, 18 Mar 2026 11:52:30 GMT",
+      "server": "weverse",
+      "vary": "Accept-Encoding",
+      "via": "1.1 d5ce6c221fc32392a410de67b7c4dec8.cloudfront.net (CloudFront), 1.1 2d90c67e232363c8f95bec1c7a5e5d2c.cloudfront.net (CloudFront)",
+      "x-amz-cf-id": "B6nYSgveLz2EbqTHXD1N4B_KhDQqxyGQSTyPD1HH_AQSiH_J7DkxOw==",
+      "x-amz-cf-pop": "ICN57-P6, IAD61-P11",
+      "x-benx-transactionid": "c13c88bd-f063-4904-b21a-6853ea75f0cc",
+      "x-cache": "Miss from cloudfront"
+    },
+    "data": {
+      "saleId": 53635,
+      "partnerCode": "WEV_KO",
+      "sectionType": "NORMAL",
+      "thumbnailImageUrls": ["https://cdn-contents.weverseshop.io/public/shop/183d0390a89d93140649e394bb5defbf.png"],
+      "status": "SOLD_OUT",
+      "statusCode": "sale.status.out.of.stock",
+      "labelArtistInfo": {
+        "labelArtistId": 7,
+        "name": "SEVENTEEN",
+        "shortName": "SEVENTEEN",
+        "logoImageUrl": "https://cdn-contents.weverseshop.io/public/shop/473056f5b32e53b2ab5b2d9cba5529db.jpg"
+      },
+      "name": "도겸X승관 1st Mini Album '소야곡' [LP]",
+      "price": {
+        "originalPrice": 49000,
+        "salePrice": 49000,
+        "supplyPrice": 44545,
+        "supplySalePrice": 44545,
+        "discountPercent": 0,
+        "isDiscountDisplay": false,
+        "earnedCash": 450,
+        "isTaxIncluded": false,
+        "includeJapanTaxInPrice": false,
+        "includeKoreaTaxInPrice": false,
+        "isTaxDeductible": false
+      },
+      "icons": [],
+      "emblems": [],
+      "eventGuides": [],
+      "shipping": {"shippingGroupId": 31},
+      "orderLimitInfo": {
+        "descriptions": ["Weverse Global handles this product."]
+      },
+      "detailImages": [
+        {"imageUrl": "https://cdn-contents.weverseshop.io/public/shop/a4c5cc6a82e7f60a65b2f8ccc7b9acb4.png", "width": 720, "height": 1409},
+        {"imageUrl": "https://cdn-contents.weverseshop.io/public/shop/2dc2ad3946be4621169ddf457c76d982.jpg", "width": 720, "height": 3086}
+      ],
+      "isShareEnable": true,
+      "isDigitalLive": false,
+      "isMembershipBenefit": false,
+      "isCartUsable": true,
+      "isCartButtonDisplay": true,
+      "isShippingAddressRequired": true,
+      "isOrderLimitedPerUser": false,
+      "isSeoReport": true,
+      "albumChartTargets": ["HANTEO_CIRCLE"],
+      "option": {
+        "optionSelectionType": "MULTIPLE",
+        "options": [
+          {
+            "saleStockId": 103770,
+            "saleStockIds": [103770],
+            "saleOptionName": "LP",
+            "isSoldOut": false,
+            "variantOptionLocation": [],
+            "optionAddPrice": 0,
+            "optionSalePrice": 49000,
+            "supplyOptionSalePrice": 44545
+          }
+        ],
+        "hasOptionAddPrice": false,
+        "variants": []
+      },
+      "goodsOrderLimit": {
+        "orderLimitType": "GOODS",
+        "maxOrderQuantity": 5,
+        "availableQuantity": 5
+      },
+      "cautionInfos": [
+        "The random items in this album are included with equal probability.",
+        "The outbox is used to protect the actual product. Please note that we do not offer exchange or refund due to damages that may occur during the delivery.",
+        "Product size may differ by 10 to 30mm due to different measurements.",
+        "Please note the color tone of the product image may be different from that of the actual product."
+      ],
+      "descriptionInfos": [
+        {"descriptions": ["100% of the album sales on Weverse Shop will count for Hanteo Chart and Circle Chart."]}
+      ],
+      "notificationInfos": [
+        {"title": "Product Name", "description": "도겸X승관 1st Mini Album '소야곡' [LP]"},
+        {"title": "Label", "description": "PLEDIS ENTERTAINMENT"},
+        {"title": "Release date", "description": "26.03.16"},
+        {"title": "Title ", "description": "Blue"},
+        {"title": "Contents", "description": "-아웃박스: 1종 / W315 X H315 X T5 (mm)\n-이너 슬리브: 1종 / W305 X H305 (mm)\n-씨블루 디스크 (A/B Side): 1종 / W300 X H300 (mm) \n-스티커: 1종 / W100 X H150 (mm)\n-북클릿: 1종 / W300 X H300 (mm) / 16p\n-포토카드: 4종 / W55 X H85 (mm)\n-가사지/포스터: 1종 / W390 X H290 (mm)"},
+        {"title": "Track list", "description": "1. Rockstar (DK Solo)\n2. Blue\n3. Guilty Pleasure\n4. Slience\n5. Dream Serenade (SEUNGKWAN Solo)\n6. Prelude of love"},
+        {"title": "Manufacturer", "description": "YG PLUS"},
+        {"title": "Country of manufacture", "description": "KOREA"},
+        {"title": "Period of use", "description": "Not Applicable"},
+        {"title": "How to Offer Your Goods", "description": "LP"},
+        {"title": "Minimum System Specifications", "description": "Not Applicable"},
+        {"title": "Quality assurance standards", "description": "In accordance with relevant laws and the criteria for the settlement of consumer disputes"},
+        {"title": "Customer service", "description": "Weverse Shop Customer Center : 1544-0790"}
+      ],
+      "returnInfosId": 1,
+      "metaTag": {}
+    }
+  },
+  "key_findings": {
+    "endpoint_pattern": "/api/wvs/product/api/v1/sales/{saleId}?displayPlatform=WEB",
+    "required_headers": [
+      "x-benx-artistid",
+      "x-benx-currency",
+      "x-benx-language",
+      "x-benx-os",
+      "x-user-agent",
+      "x-weverse-usercountry"
+    ],
+    "required_cookies": [
+      "wes_artistId",
+      "wes_currency",
+      "wes_display_user_country"
+    ],
+    "status_field": "status",
+    "status_values": {
+      "SOLD_OUT": "售罄",
+      "ON_SALE": "在售"
+    },
+    "stock_info_location": "option.options[].isSoldOut"
+  }
+}

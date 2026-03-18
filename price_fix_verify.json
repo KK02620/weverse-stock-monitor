@@ -1,0 +1,12 @@
+{
+  "修复后价格": {
+    "display_price": 44545.0,
+    "original_price": 44545.0
+  },
+  "原始价格字段": {
+    "salePrice": 49000.0,
+    "originalPrice": 49000.0,
+    "supplyPrice": 44545.0,
+    "supplySalePrice": 44545.0
+  }
+}
