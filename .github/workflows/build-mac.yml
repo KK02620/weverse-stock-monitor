@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v4
@@ -32,9 +34,25 @@ jobs:
         zip -r -y WeverseStockMonitor-macOS.zip WeverseStockMonitor.app
         ls -la
 
-    - name: Upload App ZIP
-      uses: actions/upload-artifact@v4
+    - name: Get version
+      id: version
+      run: echo "version=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
       with:
-        name: WeverseStockMonitor-macOS
-        path: dist/WeverseStockMonitor-macOS.zip
-        retention-days: 30
+        tag_name: v${{ steps.version.outputs.version }}
+        name: WeverseStockMonitor ${{ steps.version.outputs.version }}
+        body: |
+          ## Weverse Stock Monitor for macOS
+
+          ### 下载说明
+          1. 下载 `WeverseStockMonitor-macOS.zip`
+          2. 解压得到 `WeverseStockMonitor.app`
+          3. 首次运行：右键点击 → 打开（或在系统设置中允许）
+
+          ### 更新内容
+          - 自动构建版本
+        files: dist/WeverseStockMonitor-macOS.zip
+        draft: false
+        prerelease: false
