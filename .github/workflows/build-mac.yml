@@ -26,9 +26,15 @@ jobs:
     - name: Build Mac App
       run: python build_mac.py
 
-    - name: Upload App
+    - name: Package App as ZIP
+      run: |
+        cd dist
+        zip -r -y WeverseStockMonitor-macOS.zip WeverseStockMonitor.app
+        ls -la
+
+    - name: Upload App ZIP
       uses: actions/upload-artifact@v4
       with:
         name: WeverseStockMonitor-macOS
-        path: dist/WeverseStockMonitor.app
+        path: dist/WeverseStockMonitor-macOS.zip
         retention-days: 30
