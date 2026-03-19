@@ -28,11 +28,19 @@ jobs:
     - name: Build Mac App
       run: python build_mac.py
 
-    - name: Package App as ZIP
+    - name: Create DMG
       run: |
-        cd dist
-        zip -r -y WeverseStockMonitor-macOS.zip WeverseStockMonitor.app
-        ls -la
+        # 创建临时目录
+        mkdir -p dmg_temp
+        cp -R dist/WeverseStockMonitor.app dmg_temp/
+
+        # 创建 DMG
+        hdiutil create -volname "WeverseStockMonitor" \
+          -srcfolder dmg_temp \
+          -ov -format UDZO \
+          dist/WeverseStockMonitor-macOS.dmg
+
+        ls -la dist/
 
     - name: Get version
       id: version
@@ -47,12 +55,13 @@ jobs:
           ## Weverse Stock Monitor for macOS
 
           ### 下载说明
-          1. 下载 `WeverseStockMonitor-macOS.zip`
-          2. 解压得到 `WeverseStockMonitor.app`
-          3. 首次运行：右键点击 → 打开（或在系统设置中允许）
+          1. 下载 `WeverseStockMonitor-macOS.dmg`
+          2. 双击打开 DMG 文件
+          3. 将 `WeverseStockMonitor.app` 拖到"应用程序"文件夹，或直接双击运行
+          4. 首次运行：右键点击 → 打开（或在系统设置中允许）
 
           ### 更新内容
           - 自动构建版本
-        files: dist/WeverseStockMonitor-macOS.zip
+        files: dist/WeverseStockMonitor-macOS.dmg
         draft: false
         prerelease: false
