@@ -301,6 +301,17 @@ class StockMonitor:
                     product.restock_count += 1
                     product.restock_time = datetime.now()  # 记录补货时间
                     logger.info(f"检测到商品补货: {sale_id} ({product.name})")
+
+                    # 播放响铃 + 桌面通知
+                    try:
+                        self.notifier.play_alert_sound(duration=self.notifier.sound_duration)
+                        self.notifier.show_desktop_notification(
+                            title="Weverse监控 - 商品补货",
+                            message=f"【{product.name}】已补货！"
+                        )
+                    except Exception as e:
+                        logger.error(f"发送补货通知失败: {e}")
+
                     await self._trigger_restock_callbacks(product)
 
                 return product
