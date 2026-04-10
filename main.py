@@ -46,7 +46,11 @@ def main():
 
     # 初始化组件
     storage = Storage(str(Config().EXCEL_FILE))
-    notifier = Notifier(sound_duration=Config.SOUND_DURATION)
+    notification_settings = storage.load_notification_settings()
+    notifier = Notifier(
+        sound_duration=Config.SOUND_DURATION,
+        custom_sound_path=notification_settings.get("custom_sound_path"),
+    )
 
     # 创建爬虫和监控器
     crawler = WeverseCrawler()

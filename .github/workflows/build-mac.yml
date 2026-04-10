@@ -42,11 +42,18 @@ jobs:
 
         ls -la dist/
 
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: WeverseStockMonitor-macOS
+        path: dist/WeverseStockMonitor-macOS.dmg
+
     - name: Get version
       id: version
       run: echo "version=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
 
     - name: Create Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.version.outputs.version }}
@@ -62,6 +69,7 @@ jobs:
 
           ### 更新内容
           - 自动构建版本
+          - 增加 MP3 声音提示与系统托盘选择功能
         files: dist/WeverseStockMonitor-macOS.dmg
         draft: false
         prerelease: false

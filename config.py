@@ -52,7 +52,7 @@ class Config:
     # 监控配置
     MONITOR_INTERVAL = 30  # 轮询间隔（秒）
     MAX_PRODUCTS = 10      # 最大商品数量
-    SOUND_DURATION = 5     # 响铃时长（秒）
+    SOUND_DURATION = 15    # 响铃时长（秒）
     DEFAULT_SOUND = "Glass"  # Mac系统音名称
 
     # API配置

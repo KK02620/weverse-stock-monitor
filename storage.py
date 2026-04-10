@@ -1,8 +1,9 @@
 """
 Excel数据存储模块
-实现商品数据的持久化存储
+实现商品数据与通知设置的持久化存储
 """
 
+import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -32,6 +33,10 @@ class Storage:
     @property
     def DEFAULT_EXCEL_FILE(self) -> Path:
         return self.DEFAULT_DATA_DIR / "products.xlsx"
+
+    @property
+    def DEFAULT_SETTINGS_FILE(self) -> Path:
+        return self.DEFAULT_DATA_DIR / "notification_settings.json"
 
     # 表头定义
     COLUMNS = [
@@ -74,6 +79,59 @@ class Storage:
     def _file_exists(self) -> bool:
         """检查Excel文件是否存在"""
         return self.excel_file.exists()
+
+    def _get_settings_path(self) -> Path:
+        """获取通知设置文件绝对路径"""
+        return (self.data_dir / "notification_settings.json").resolve()
+
+    def _normalize_audio_settings(self, settings: Optional[dict] = None) -> dict:
+        """标准化音频设置并校验自定义 MP3"""
+        merged_settings = {
+            "sound_enabled": True,
+            "sound_name": "Glass",
+            "custom_sound_path": None,
+        }
+        if settings:
+            merged_settings = {**merged_settings, **settings}
+
+        custom_sound_path = merged_settings.get("custom_sound_path")
+        if custom_sound_path:
+            custom_sound = Path(custom_sound_path).expanduser()
+            if custom_sound.suffix.lower() != ".mp3":
+                raise ValueError("仅支持 MP3 提示音文件")
+            if not custom_sound.exists():
+                raise ValueError(f"提示音文件不存在: {custom_sound}")
+            merged_settings["custom_sound_path"] = str(custom_sound)
+
+        return merged_settings
+
+    def load_notification_settings(self) -> dict:
+        """加载通知设置"""
+        settings_file = self._get_settings_path()
+        if not settings_file.exists():
+            return {}
+
+        try:
+            return json.loads(settings_file.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"加载通知设置失败: {e}")
+            return {}
+
+    def save_notification_settings(self, settings: dict) -> bool:
+        """保存通知设置"""
+        settings_file = self._get_settings_path()
+        current_settings = self.load_notification_settings()
+        merged_settings = {**current_settings, **settings}
+
+        try:
+            settings_file.write_text(
+                json.dumps(merged_settings, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            return True
+        except Exception as e:
+            print(f"保存通知设置失败: {e}")
+            return False
 
     def _create_empty_dataframe(self) -> pd.DataFrame:
         """创建空的DataFrame"""

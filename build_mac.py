@@ -110,6 +110,7 @@ def build_app():
         spec_lines.append(f'    (str(project_root / "{f}"), "."),')
 
     spec_lines.append('    (str(project_root / "data"), "data"),')
+    spec_lines.append('    (str(project_root / "mp3"), "mp3"),')
     spec_lines.append("]")
     spec_lines.append("")
 

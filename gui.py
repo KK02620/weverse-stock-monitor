@@ -71,11 +71,11 @@ class SimpleGUI:
         line.pack(fill=tk.X, padx=20)
 
         # 工具栏
-        toolbar = tk.Frame(self.root, bg="white", padx=20, pady=12)
-        toolbar.pack(fill=tk.X)
+        self.toolbar = tk.Frame(self.root, bg="white", padx=20, pady=12)
+        self.toolbar.pack(fill=tk.X)
 
         self.add_btn = tk.Button(
-            toolbar,
+            self.toolbar,
             text="+ 添加商品",
             font=("Helvetica", 11, "bold"),
             bg="#000000",
@@ -92,7 +92,7 @@ class SimpleGUI:
 
         # 间隔设置
         tk.Label(
-            toolbar,
+            self.toolbar,
             text="监控间隔:",
             font=("Helvetica", 11),
             bg="white",
@@ -101,7 +101,7 @@ class SimpleGUI:
 
         self.interval_var = tk.StringVar(value="30")
         interval_spin = tk.Spinbox(
-            toolbar,
+            self.toolbar,
             from_=5,
             to=3600,
             textvariable=self.interval_var,
@@ -114,7 +114,7 @@ class SimpleGUI:
         interval_spin.pack(side=tk.LEFT)
 
         tk.Label(
-            toolbar,
+            self.toolbar,
             text="秒",
             font=("Helvetica", 11),
             bg="white",
@@ -122,7 +122,7 @@ class SimpleGUI:
         ).pack(side=tk.LEFT, padx=(5, 20))
 
         self.monitor_btn = tk.Button(
-            toolbar,
+            self.toolbar,
             text="开始监控",
             font=("Helvetica", 11),
             bg="white",
@@ -138,8 +138,42 @@ class SimpleGUI:
         )
         self.monitor_btn.pack(side=tk.LEFT)
 
+        self.test_sound_btn = tk.Button(
+            self.toolbar,
+            text="测试声音",
+            font=("Helvetica", 11),
+            bg="white",
+            fg="black",
+            activebackground="#f0f0f0",
+            activeforeground="black",
+            bd=1,
+            relief=tk.SOLID,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            command=self._test_sound
+        )
+        self.test_sound_btn.pack(side=tk.LEFT, padx=(10, 0))
+
+        self.settings_btn = tk.Button(
+            self.toolbar,
+            text="音频设置 ▼",
+            font=("Helvetica", 11),
+            bg="white",
+            fg="black",
+            activebackground="#f0f0f0",
+            activeforeground="black",
+            bd=1,
+            relief=tk.SOLID,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            command=self._toggle_settings_panel
+        )
+        self.settings_btn.pack(side=tk.LEFT, padx=(10, 0))
+
         self.counter_label = tk.Label(
-            toolbar,
+            self.toolbar,
             text="0 / 10",
             font=("Helvetica", 11, "bold"),
             bg="#f5f5f5",
@@ -148,6 +182,43 @@ class SimpleGUI:
             pady=5
         )
         self.counter_label.pack(side=tk.RIGHT)
+
+        # 音频设置面板（默认隐藏）
+        self.settings_panel = tk.Frame(self.root, bg="#f5f5f5", padx=20, pady=10)
+        
+        # 初始化读取现有设置
+        initial_mp3 = bool(self.monitor.notifier.custom_sound_path)
+        self.mp3_var = tk.BooleanVar(value=initial_mp3)
+        
+        self.mp3_check = tk.Checkbutton(
+            self.settings_panel,
+            text="启用 MP3 响铃 (替代系统音)",
+            variable=self.mp3_var,
+            font=("Helvetica", 11),
+            bg="#f5f5f5",
+            command=self._on_mp3_toggle
+        )
+        self.mp3_check.pack(side=tk.LEFT)
+
+        self.play_mp3_btn = tk.Button(
+            self.settings_panel,
+            text="试听 MP3",
+            font=("Helvetica", 10),
+            bg="white",
+            cursor="hand2",
+            command=self._play_mp3_test
+        )
+        self.play_mp3_btn.pack(side=tk.LEFT, padx=(15, 0))
+
+        self.stop_mp3_btn = tk.Button(
+            self.settings_panel,
+            text="停止试听",
+            font=("Helvetica", 10),
+            bg="white",
+            cursor="hand2",
+            command=self._stop_mp3_test
+        )
+        self.stop_mp3_btn.pack(side=tk.LEFT, padx=(5, 0))
 
         # 商品列表区域
         list_frame = tk.Frame(self.root, bg="white")
@@ -201,8 +272,74 @@ class SimpleGUI:
             width = event.width - 60
             self.canvas.itemconfig(self.canvas_window, width=width)
 
+    def _test_sound(self):
+        """测试声音"""
+        try:
+            self.monitor.notifier.play_alert_sound(duration=5)
+            self._update_status("正在测试声音（5秒）")
+        except Exception as e:
+            messagebox.showerror("错误", f"测试声音失败: {e}")
+
+    def _toggle_settings_panel(self):
+        if self.settings_panel.winfo_ismapped():
+            self.settings_panel.pack_forget()
+            self.settings_btn.config(text="音频设置 ▼")
+        else:
+            self.settings_panel.pack(fill=tk.X, after=self.toolbar)
+            self.settings_btn.config(text="音频设置 ▲")
+
+    def _on_mp3_toggle(self):
+        is_enabled = self.mp3_var.get()
+        import os
+        mp3_path = os.path.join(os.path.dirname(__file__), "mp3", "7095273652496665352.mp3")
+        
+        if is_enabled:
+            self.monitor.notifier.set_custom_sound(mp3_path)
+            if self.storage:
+                self.storage.save_notification_settings({"custom_sound_path": mp3_path})
+            self._play_mp3_test()
+        else:
+            self.monitor.notifier.set_custom_sound(None)
+            if self.storage:
+                self.storage.save_notification_settings({"custom_sound_path": None})
+            self._stop_mp3_test()
+
+    def _play_mp3_test(self):
+        self.monitor.notifier._stop_alert_sound()
+        import os
+        import threading
+        mp3_path = os.path.join(os.path.dirname(__file__), "mp3", "7095273652496665352.mp3")
+        
+        self.monitor.notifier._stop_event.clear()
+        def _test_loop():
+            old_path = self.monitor.notifier.custom_sound_path
+            self.monitor.notifier.custom_sound_path = mp3_path
+            self.monitor.notifier._play_custom_sound_once()
+            
+            if sys.platform == "win32":
+                import ctypes
+                mciSendString = ctypes.windll.WINMM.mciSendStringW
+                status_buffer = ctypes.create_unicode_buffer(256)
+                while not self.monitor.notifier._stop_event.is_set():
+                    mciSendString('status custom_mp3 mode', status_buffer, 256, 0)
+                    if status_buffer.value != 'playing':
+                        break
+                    import time
+                    time.sleep(0.3)
+                    
+            if not self.mp3_var.get():
+                self.monitor.notifier.custom_sound_path = old_path
+
+        threading.Thread(target=_test_loop, daemon=True).start()
+        self._update_status("正在试听 MP3音频...")
+
+    def _stop_mp3_test(self):
+        self.monitor.notifier._stop_alert_sound()
+        if not self.mp3_var.get():
+            self.monitor.notifier.set_custom_sound(None)
+        self._update_status("已停止试听")
+
     def _show_add_dialog(self):
-        """显示添加商品对话框"""
         if len(self.cards) >= 10:
             messagebox.showinfo("提示", "最多监控 10 个商品")
             return
