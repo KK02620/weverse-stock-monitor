@@ -14,7 +14,7 @@ import threading
 
 # 导入项目模块
 try:
-    from crawler import WeverseCrawler
+    from weverse_crawler import WeverseCrawler
 except ImportError:
     WeverseCrawler = None
 
@@ -111,13 +111,16 @@ class StockMonitor:
         self._monitored_products: Dict[int, MonitoredProduct] = {}
         self._is_running = False
         self._monitoring_task: Optional[asyncio.Task] = None
-        self._stop_event = asyncio.Event()
+        self._stop_event: Optional[asyncio.Event] = None
+        self._thread_stop_event = threading.Event()
+        self._monitor_thread: Optional[threading.Thread] = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
 
         # 回调函数
         self._restock_callbacks: List[Callable[[MonitoredProduct], None]] = []
 
         # 线程安全锁
-        self._lock = asyncio.Lock()
+        self._lock: Optional[asyncio.Lock] = None
 
         # GUI集成支持
         self._gui_loop: Optional[asyncio.AbstractEventLoop] = None
@@ -262,6 +265,9 @@ class StockMonitor:
                 logger.error(f"获取商品 {sale_id} 信息失败")
                 return None
 
+            if self._lock is None:
+                self._lock = asyncio.Lock()
+
             async with self._lock:
                 if sale_id not in self._monitored_products:
                     return None
@@ -296,8 +302,8 @@ class StockMonitor:
                 product.is_option_sold_out = product_info.get("选项是否售罄", False)
                 product.crawled_at = product_info.get("采集时间", "")
 
-                # 检测补货：从SOLD_OUT变为SALE
-                if product.last_status == "SOLD_OUT" and product.current_status == "SALE":
+                # 检测补货：任意非 SALE 状态转为 SALE 都触发
+                if product.last_status != "SALE" and product.current_status == "SALE":
                     product.restock_count += 1
                     product.restock_time = datetime.now()  # 记录补货时间
                     logger.info(f"检测到商品补货: {sale_id} ({product.name})")
@@ -394,10 +400,13 @@ class StockMonitor:
 
                 # 等待下一次检查或停止信号
                 try:
-                    await asyncio.wait_for(
-                        self._stop_event.wait(),
-                        timeout=self.poll_interval
-                    )
+                    if self._stop_event is None:
+                        await asyncio.sleep(self.poll_interval)
+                    else:
+                        await asyncio.wait_for(
+                            self._stop_event.wait(),
+                            timeout=self.poll_interval
+                        )
                     # 如果收到停止信号，退出循环
                     break
                 except asyncio.TimeoutError:
@@ -409,6 +418,31 @@ class StockMonitor:
                 await asyncio.sleep(1)  # 出错后短暂等待
 
         logger.info("监控循环已停止")
+
+    def _run_monitor_thread(self) -> None:
+        """在后台线程中运行 asyncio 监控循环"""
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+        self._stop_event = asyncio.Event()
+        self._lock = asyncio.Lock()
+
+        try:
+            self._loop.run_until_complete(self._monitoring_loop())
+        except Exception as e:
+            logger.error(f"后台监控线程异常: {e}")
+        finally:
+            try:
+                pending = asyncio.all_tasks(self._loop)
+                for task in pending:
+                    task.cancel()
+                if pending:
+                    self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            except Exception:
+                pass
+            self._loop.close()
+            self._loop = None
+            self._stop_event = None
+            self._lock = None
 
     def start(self) -> bool:
         """
@@ -426,17 +460,13 @@ class StockMonitor:
             return False
 
         self._is_running = True
-        self._stop_event.clear()
-
-        # 获取或创建事件循环
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        # 创建监控任务
-        self._monitoring_task = loop.create_task(self._monitoring_loop())
+        self._thread_stop_event.clear()
+        self._monitor_thread = threading.Thread(
+            target=self._run_monitor_thread,
+            daemon=True,
+            name="StockMonitorThread",
+        )
+        self._monitor_thread.start()
 
         logger.info(f"监控器已启动，正在监控 {len(self._monitored_products)} 个商品")
         return True
@@ -453,11 +483,16 @@ class StockMonitor:
             return False
 
         self._is_running = False
-        self._stop_event.set()
+        self._thread_stop_event.set()
 
-        # 取消监控任务
-        if self._monitoring_task and not self._monitoring_task.done():
-            self._monitoring_task.cancel()
+        if self._loop and self._stop_event:
+            try:
+                self._loop.call_soon_threadsafe(self._stop_event.set)
+            except Exception as e:
+                logger.warning(f"发送停止信号失败: {e}")
+
+        if self._monitor_thread and self._monitor_thread.is_alive():
+            self._monitor_thread.join(timeout=2)
 
         logger.info("监控器已停止")
         return True
@@ -501,29 +536,7 @@ class StockMonitor:
         Returns:
             bool: 是否启动成功
         """
-        if self._is_running:
-            logger.warning("监控器已经在运行中")
-            return False
-
-        if not self._monitored_products:
-            logger.warning("监控列表为空，请先添加商品")
-            return False
-
-        self._is_running = True
-        self._stop_event.clear()
-
-        # 在GUI事件循环中创建任务
-        if self._gui_loop:
-            asyncio.run_coroutine_threadsafe(
-                self._monitoring_loop(),
-                self._gui_loop
-            )
-        else:
-            # 如果没有GUI循环，使用默认方式
-            self.start()
-
-        logger.info(f"监控器已在GUI环境中启动，正在监控 {len(self._monitored_products)} 个商品")
-        return True
+        return self.start()
 
     async def force_check(self) -> List[MonitoredProduct]:
         """

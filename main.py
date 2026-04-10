@@ -21,7 +21,7 @@ sys.path.insert(0, bundle_dir)
 
 from config import Config
 from models import MonitorConfig
-from crawler import WeverseCrawler
+from weverse_crawler import WeverseCrawler
 from monitor import StockMonitor
 from notifier import Notifier
 from storage import Storage
