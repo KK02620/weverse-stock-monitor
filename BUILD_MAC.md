@@ -1,5 +1,50 @@
 # Mac 打包说明
 
+## GitHub 打包优先
+
+如果你要**手动再打包一份 mac 版 `.dmg`**，并且**必须通过 GitHub 打包**，请优先使用仓库：
+
+- `https://github.com/KK02620/weverse-stock-monitor`
+
+当前仓库已经有 GitHub Actions 工作流：
+
+- `.github/workflows/build-mac.yml`
+
+它支持：
+
+- 推送到 `main` / `master` 时自动构建
+- 在 GitHub 页面中手动点击 `Run workflow` 触发构建
+- 生成 `WeverseStockMonitor-macOS.dmg`
+- 上传到 Actions Artifact
+- 在 `main` 分支 push 时自动创建 Release
+
+## 推荐方式：通过 GitHub 手动打包 mac 版 DMG
+
+适用场景：
+
+- 当前电脑不是 Mac
+- 需要使用 GitHub 的 macOS Runner 统一构建
+- 需要重新手动打一份 mac 版 `.dmg`
+
+操作步骤：
+
+1. 先把最新代码推送到 GitHub 仓库
+2. 打开仓库页面：`https://github.com/KK02620/weverse-stock-monitor`
+3. 进入 `Actions`
+4. 选择工作流 `Build Mac App`
+5. 点击右侧 `Run workflow`
+6. 选择需要构建的分支（通常是 `main`）
+7. 点击 `Run workflow` 开始打包
+8. 等待 `build` 任务完成
+9. 在工作流运行结果中下载 Artifact：`WeverseStockMonitor-macOS`
+10. 解压后即可得到 `WeverseStockMonitor-macOS.dmg`
+
+说明：
+
+- 这就是“通过 GitHub 手动再打包一份 mac 版 `.dmg`”的标准做法
+- 如果你推送到了 `main`，工作流完成后还会自动创建 Release
+- 如果只是想临时重新打一份，不一定需要发版，直接下载 Artifact 即可
+
 ## 打包前准备
 
 ### 1. 安装依赖
@@ -42,6 +87,10 @@ python build_mac.py --dmg
 打包完成后，会在 `dist/` 目录下生成：
 - `WeverseStockMonitor.app` - 应用程序
 - `WeverseStockMonitor.dmg` (如果使用 --dmg) - 安装包
+
+### 方式一补充：通过 GitHub Actions 构建（非 Mac 环境优先）
+
+如果你当前不是在 macOS 上操作，或者明确要求**一定通过 GitHub 打包**，请不要在本地执行 `build_mac.py`，直接使用上面的 GitHub 手动打包流程。
 
 ### 方式二：手动打包
 
@@ -155,5 +204,6 @@ python build_mac.py --dmg
 打包完成后，可以将以下文件分发给用户：
 1. `WeverseStockMonitor.app` - 直接运行
 2. `WeverseStockMonitor.dmg` - 安装包（推荐）
+3. `WeverseStockMonitor-macOS.dmg` - GitHub Actions 构建产物
 
 用户无需安装 Python 或任何依赖，双击即可运行。

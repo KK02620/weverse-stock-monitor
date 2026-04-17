@@ -71,6 +71,20 @@ class MonitoredProduct:
     is_cart_usable: bool = False
     is_option_sold_out: bool = False
     crawled_at: str = ""
+    last_is_purchasable: bool = False
+    current_is_purchasable: bool = False
+    has_successful_check: bool = False
+    triggered_this_check: bool = False
+
+    def is_purchasable(self) -> bool:
+        """使用更保守的规则判断是否可购买，避免接口字段冲突时误报。"""
+        if self.current_status != "SALE":
+            return False
+
+        if bool(self.is_option_sold_out):
+            return False
+
+        return bool(self.is_cart_usable) or self.available_quantity > 0
 
 
 class StockMonitor:
@@ -273,6 +287,7 @@ class StockMonitor:
                     return None
 
                 product = self._monitored_products[sale_id]
+                was_checked = product.has_successful_check
 
                 # 更新商品信息
                 product.last_status = product.current_status
@@ -283,11 +298,17 @@ class StockMonitor:
                 product.product_info = product_info
 
                 # 提取价格信息
-                price_str = product_info.get("折扣价") or product_info.get("原价", "0")
+                price_str = product_info.get("售价") or product_info.get("折扣价") or product_info.get("原价", "0")
                 try:
                     product.sale_price = float(str(price_str).replace("₩", "").replace(",", "").strip() or 0)
                 except (ValueError, TypeError):
                     product.sale_price = 0
+
+                original_price_str = product_info.get("原价", "0")
+                try:
+                    product.original_price = float(str(original_price_str).replace("₩", "").replace(",", "").strip() or 0)
+                except (ValueError, TypeError):
+                    product.original_price = 0
 
                 # 提取扩展字段
                 product.artist = product_info.get("艺术家", "")
@@ -301,22 +322,45 @@ class StockMonitor:
                 product.is_cart_usable = product_info.get("是否可加入购物车", False)
                 product.is_option_sold_out = product_info.get("选项是否售罄", False)
                 product.crawled_at = product_info.get("采集时间", "")
+                product.last_is_purchasable = product.current_is_purchasable
 
-                # 检测补货：任意非 SALE 状态转为 SALE 都触发
-                if product.last_status != "SALE" and product.current_status == "SALE":
+                if (
+                    product.current_status != "SALE"
+                    and (
+                        bool(product.is_cart_usable)
+                        or product.available_quantity > 0
+                        or not bool(product.is_option_sold_out)
+                    )
+                ):
+                    logger.warning(
+                        "商品 %s 库存字段冲突: status=%s, is_cart_usable=%s, available_quantity=%s, is_option_sold_out=%s",
+                        sale_id,
+                        product.current_status,
+                        product.is_cart_usable,
+                        product.available_quantity,
+                        product.is_option_sold_out,
+                    )
+
+                product.current_is_purchasable = product.is_purchasable()
+                product.has_successful_check = True
+                product.triggered_this_check = False
+
+                # 与 GUI 一致：只要检测到“可购买”，就立即响铃。
+                # 首次成功检查且当前可购买，也会立刻触发一次。
+                if product.current_is_purchasable and (not was_checked or not product.last_is_purchasable):
                     product.restock_count += 1
                     product.restock_time = datetime.now()  # 记录补货时间
-                    logger.info(f"检测到商品补货: {sale_id} ({product.name})")
+                    product.triggered_this_check = True
+                    logger.info(f"检测到商品可购买: {sale_id} ({product.name})")
 
-                    # 播放响铃 + 桌面通知
+                    # 桌面通知按商品发送，响铃则由本轮汇总后统一触发一次
                     try:
-                        self.notifier.play_alert_sound(duration=self.notifier.sound_duration)
                         self.notifier.show_desktop_notification(
-                            title="Weverse监控 - 商品补货",
-                            message=f"【{product.name}】已补货！"
+                            title="Weverse监控 - 商品可购买",
+                            message=f"【{product.name}】当前可购买！"
                         )
                     except Exception as e:
-                        logger.error(f"发送补货通知失败: {e}")
+                        logger.error(f"发送可购买通知失败: {e}")
 
                     await self._trigger_restock_callbacks(product)
 
@@ -351,12 +395,12 @@ class StockMonitor:
             sale_id = sale_ids[i]
             if isinstance(result, MonitoredProduct):
                 success_count += 1
-                status_icon = "✓" if result.current_status == "SALE" else "✗"
+                status_icon = "✓" if result.current_is_purchasable else "✗"
                 status_text = result.current_status or "UNKNOWN"
-                print(f"  [{status_icon}] ID {sale_id}: {result.name[:30]:<30} | 状态: {status_text}")
+                purchase_text = "可购买" if result.current_is_purchasable else "不可购买"
+                print(f"  [{status_icon}] ID {sale_id}: {result.name[:30]:<30} | 状态: {status_text} | {purchase_text}")
 
-                # 记录补货商品
-                if result.restock_time and result.restock_time.strftime("%Y-%m-%d %H:%M") == check_time[:-3]:
+                if result.triggered_this_check:
                     restock_items.append(result)
             else:
                 error_count += 1
@@ -367,6 +411,11 @@ class StockMonitor:
 
         # 如果有补货，打印汇总信息
         if restock_items:
+            try:
+                self.notifier.play_alert_sound(duration=self.notifier.sound_duration)
+            except Exception as e:
+                logger.error(f"播放汇总提示音失败: {e}")
+
             print(f"\n⚠️  检测到 {len(restock_items)} 个商品补货!")
             for item in restock_items:
                 print(f"   - {item.name} (ID: {item.sale_id})")
@@ -484,6 +533,11 @@ class StockMonitor:
 
         self._is_running = False
         self._thread_stop_event.set()
+
+        try:
+            self.notifier.stop_alert_sound()
+        except Exception as e:
+            logger.warning(f"停止提示音失败: {e}")
 
         if self._loop and self._stop_event:
             try:

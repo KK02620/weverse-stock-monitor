@@ -38,6 +38,7 @@ class SimpleGUI:
 
         # 商品卡片字典
         self.cards = {}
+        self._mp3_test_session = 0
 
         self._setup_ui()
         self._start_refresh()
@@ -305,7 +306,9 @@ class SimpleGUI:
             self._stop_mp3_test()
 
     def _play_mp3_test(self):
-        self.monitor.notifier._stop_alert_sound()
+        self._mp3_test_session += 1
+        current_session = self._mp3_test_session
+        self.monitor.notifier.stop_alert_sound()
         import os
         import threading
         mp3_path = os.path.join(os.path.dirname(__file__), "mp3", "7095273652496665352.mp3")
@@ -320,21 +323,27 @@ class SimpleGUI:
                 import ctypes
                 mciSendString = ctypes.windll.WINMM.mciSendStringW
                 status_buffer = ctypes.create_unicode_buffer(256)
-                while not self.monitor.notifier._stop_event.is_set():
+                while current_session == self._mp3_test_session and not self.monitor.notifier._stop_event.is_set():
                     mciSendString('status custom_mp3 mode', status_buffer, 256, 0)
                     if status_buffer.value != 'playing':
                         break
                     import time
                     time.sleep(0.3)
                     
+            if current_session != self._mp3_test_session:
+                return
+
             if not self.mp3_var.get():
                 self.monitor.notifier.custom_sound_path = old_path
+
+            self.root.after(0, lambda: self._update_status("试听完成"))
 
         threading.Thread(target=_test_loop, daemon=True).start()
         self._update_status("正在试听 MP3音频...")
 
     def _stop_mp3_test(self):
-        self.monitor.notifier._stop_alert_sound()
+        self._mp3_test_session += 1
+        self.monitor.notifier.stop_alert_sound()
         if not self.mp3_var.get():
             self.monitor.notifier.set_custom_sound(None)
         self._update_status("已停止试听")
@@ -444,6 +453,24 @@ class SimpleGUI:
 
         text_input.focus_set()
 
+    def _is_product_purchasable(self, product) -> bool:
+        """与监控器保持一致，使用更保守的规则避免误报。"""
+        if hasattr(product, "current_is_purchasable"):
+            return bool(getattr(product, "current_is_purchasable", False))
+
+        status = getattr(product, "current_status", "") or getattr(product, "status", "")
+        is_cart_usable = bool(getattr(product, "is_cart_usable", False))
+        is_option_sold_out = bool(getattr(product, "is_option_sold_out", False))
+        available_quantity = int(getattr(product, "available_quantity", 0) or 0)
+
+        if status != "SALE":
+            return False
+
+        if is_option_sold_out:
+            return False
+
+        return is_cart_usable or available_quantity > 0
+
     def _parse_urls(self, text: str) -> List[int]:
         """解析URL提取sale_id"""
         import re
@@ -536,6 +563,8 @@ class SimpleGUI:
             else:
                 messagebox.showwarning("提示", "请先添加商品")
         else:
+            self._mp3_test_session += 1
+            self.monitor.notifier.stop_alert_sound()
             self.monitor.stop()
             self.monitor_btn.config(text="开始监控", fg="black")
             self._update_status("已停止")
@@ -704,10 +733,7 @@ class SimpleGUI:
         card.stock_label = stock_label
 
         # 购物车状态 - 基于 status 和 is_cart_usable 共同判断
-        # 只有当 status 为 SALE 且 is_cart_usable 为 True 时才显示"可购买"
-        status = getattr(product, 'current_status', '') or getattr(product, 'status', '')
-        is_cart_usable = getattr(product, 'is_cart_usable', False)
-        is_cart = (status == "SALE") and is_cart_usable
+        is_cart = self._is_product_purchasable(product)
         cart_text = "可购买" if is_cart else "不可购买"
         cart_color = "#008800" if is_cart else "#cc0000"
 
@@ -805,9 +831,7 @@ class SimpleGUI:
 
         # 更新购物车状态 - 基于 status 和 is_cart_usable 共同判断
         if hasattr(card, 'cart_label'):
-            status = getattr(product, 'current_status', '') or getattr(product, 'status', '')
-            is_cart_usable = getattr(product, 'is_cart_usable', False)
-            is_cart = (status == "SALE") and is_cart_usable
+            is_cart = self._is_product_purchasable(product)
             cart_text = "可购买" if is_cart else "不可购买"
             cart_color = "#008800" if is_cart else "#cc0000"
             card.cart_label.config(text=cart_text, fg=cart_color)
@@ -826,6 +850,8 @@ class SimpleGUI:
     def _get_status_style(self, product):
         """获取状态样式"""
         status = getattr(product, 'current_status', '') or getattr(product, 'status', '')
+        if self._is_product_purchasable(product):
+            return ("可购买", "#006600", "white")
 
         if status == "SALE":
             return ("有货", "#006600", "white")
@@ -864,48 +890,53 @@ class SimpleGUI:
 
     def on_restock(self, product):
         """补货回调 - 显示通知并保存到Excel"""
-        # 显示弹窗通知
-        messagebox.showinfo(
-            "补货提醒",
-            f"{product.name}\n\n该商品已补货！"
-        )
+        def _handle_restock():
+            # 显示弹窗通知
+            messagebox.showinfo(
+                "补货提醒",
+                f"{product.name}\n\n该商品当前可购买！"
+            )
 
-        # 保存到Excel
-        if self.storage:
-            try:
-                from models import Product, ProductStatus
-                # 转换MonitoredProduct为Product以便保存
-                save_product = Product(
-                    sale_id=str(product.sale_id),
-                    name=product.name,
-                    artist=product.artist,
-                    status=ProductStatus(product.current_status.lower()) if hasattr(ProductStatus, product.current_status) else ProductStatus.UNKNOWN,
-                    original_price=product.original_price,
-                    sale_price=product.sale_price,
-                    available_quantity=product.available_quantity,
-                    thumbnail=product.thumbnail_url,
-                    restock_time=product.restock_time,
-                    last_check=product.crawled_at
-                )
-                # 加载现有数据并追加
-                existing = self.storage.load_products()
-                # 查找是否已存在
-                found = False
-                for i, p in enumerate(existing):
-                    if p.sale_id == str(product.sale_id):
-                        existing[i] = save_product
-                        found = True
-                        break
-                if not found:
-                    existing.append(save_product)
+            # 保存到Excel
+            if self.storage:
+                try:
+                    from models import Product, ProductStatus
 
-                # 保存
-                if self.storage.save_products(existing):
-                    print(f"  [保存成功] 商品 {product.name} 已保存到 Excel")
-                else:
-                    print(f"  [保存失败] 商品 {product.name} 保存失败")
-            except Exception as e:
-                print(f"  [保存错误] {e}")
+                    status_map = {
+                        "SALE": ProductStatus.SALE,
+                        "SOLD_OUT": ProductStatus.SOLD_OUT,
+                        "PRE_ORDER": ProductStatus.PRE_ORDER,
+                    }
+                    save_product = Product(
+                        sale_id=str(product.sale_id),
+                        name=product.name,
+                        status=status_map.get(product.current_status, ProductStatus.SOLD_OUT),
+                        price=float(getattr(product, "sale_price", 0) or 0),
+                        available_quantity=int(getattr(product, "available_quantity", 0) or 0),
+                        thumbnail_url=getattr(product, "thumbnail_url", None),
+                        artist=getattr(product, "artist", None),
+                        last_check_time=datetime.now(),
+                        restock_time=product.restock_time,
+                    )
+
+                    existing = self.storage.load_products()
+                    found = False
+                    for i, saved in enumerate(existing):
+                        if saved.sale_id == str(product.sale_id):
+                            existing[i] = save_product
+                            found = True
+                            break
+                    if not found:
+                        existing.append(save_product)
+
+                    if self.storage.save_products(existing):
+                        print(f"  [保存成功] 商品 {product.name} 已保存到 Excel")
+                    else:
+                        print(f"  [保存失败] 商品 {product.name} 保存失败")
+                except Exception as e:
+                    print(f"  [保存错误] {e}")
+
+        self.root.after(0, _handle_restock)
 
     def run(self):
         """运行GUI"""

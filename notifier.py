@@ -35,6 +35,8 @@ class Product:
 class Notifier:
     """跨平台通知器类"""
 
+    MAX_SOUND_DURATION = 30
+
     SYSTEM_SOUNDS = {
         "Glass": "/System/Library/Sounds/Glass.aiff",
         "Funk": "/System/Library/Sounds/Funk.aiff",
@@ -55,7 +57,7 @@ class Notifier:
     ):
         self.sound_enabled = sound_enabled
         self.sound_name = sound_name
-        self.sound_duration = max(1, sound_duration)
+        self.sound_duration = self._normalize_duration(sound_duration)
         self.custom_sound_path: Optional[str] = None
         self._sound_process: Optional[subprocess.Popen] = None
         self._stop_event = threading.Event()
@@ -91,12 +93,19 @@ class Notifier:
 
         self.custom_sound_path = str(path)
 
+    def _normalize_duration(self, duration: int) -> int:
+        """将播放时长限制在 1 到 30 秒之间。"""
+        return max(1, min(self.MAX_SOUND_DURATION, int(duration)))
+
     def _play_system_sound_once(self) -> None:
         """按平台播放一次系统提示音"""
         if sys.platform == "win32":
             winsound = importlib.import_module("winsound")
-            winsound.MessageBeep(getattr(winsound, "MB_ICONEXCLAMATION", -1))
-            time.sleep(1)
+            winsound.PlaySound(
+                "SystemExclamation",
+                winsound.SND_ALIAS | winsound.SND_ASYNC | winsound.SND_NODEFAULT,
+            )
+            self._stop_event.wait(0.25)
             return
 
         sound_path = self.SYSTEM_SOUNDS.get(self.sound_name, self.SYSTEM_SOUNDS["Glass"])
@@ -116,7 +125,7 @@ class Notifier:
             return
 
         print("\a", end="", flush=True)
-        time.sleep(1)
+        self._stop_event.wait(0.25)
 
     def _get_custom_sound_command(self, sound_path: str) -> Optional[list[str]]:
         """获取非 Windows 平台的 MP3 播放命令"""
@@ -167,6 +176,8 @@ class Notifier:
         """后台循环播放提示音"""
         if not self.sound_enabled:
             return
+
+        duration = self._normalize_duration(duration)
 
         def _play_loop():
             if self.custom_sound_path:
@@ -228,6 +239,10 @@ class Notifier:
                 self._sound_process.wait(timeout=1)
             except Exception:
                 pass
+
+    def stop_alert_sound(self) -> None:
+        """公开停止接口，供 GUI 等调用方立即停止当前音频。"""
+        self._stop_alert_sound()
 
     def show_desktop_notification(self, title: str, message: str) -> None:
         """显示桌面通知；非 macOS 平台降级为控制台输出"""

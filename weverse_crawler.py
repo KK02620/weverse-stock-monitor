@@ -90,6 +90,9 @@ class WeverseCrawler:
 
         try:
             response = self.session.get(url, params=params, timeout=10)
+            if response.status_code in (401, 403, 429):
+                if self.refresh_cookies():
+                    response = self.session.get(url, params=params, timeout=10)
             response.raise_for_status()
             data = response.json()
 
